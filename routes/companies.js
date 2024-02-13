@@ -1,7 +1,7 @@
 const db = require("../db");
 const express = require("express");
 const router = express.Router();
-
+const slugify = require('slugify');
 
 router.get('/', async (req, res) => {
     try{
@@ -14,12 +14,24 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:code', async (req, res) => {
-    try{
+    try {
         const { code } = req.params;
+
+        // Validate the 'code' parameter
+        if (!code) {
+            return res.status(400).json({ error: 'Bad Request - Missing or Invalid "code" parameter' });
+        }
+
         const compObj = await db.query(`SELECT code, name, description 
-                                        FROM companies WHERE code = $1`, [code])
-        return res.json({"company": compObj.rows[0]});                                     
-    } catch (err){
+                                        FROM companies WHERE code = $1`, [code]);
+
+        if (compObj.rows.length === 0) {
+            // If company not found, return 404
+            return res.status(500).json({ error: 'Company not found' });
+        }
+
+        return res.json({ "company": compObj.rows[0] });
+    } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
@@ -27,7 +39,9 @@ router.get('/:code', async (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
-        const { code, name, description } = req.body;
+        const { name, description } = req.body;
+
+        const code = slugify(name, {lower: true});
 
         if(!code || !name){
             return res.status(400).json({ error: "Code and name are required"});
@@ -42,7 +56,7 @@ router.post("/", async (req, res) => {
     }
     catch(err){
         console.error(err);
-        return res.status(500).json({ error: 'Internal Server Error'});
+        return res.status(400).json({ error: 'Internal Server Error'});
     }
 
    

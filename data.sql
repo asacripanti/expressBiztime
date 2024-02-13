@@ -19,6 +19,25 @@ CREATE TABLE invoices (
     CONSTRAINT invoices_amt_check CHECK ((amt > (0)::double precision))
 );
 
+-- Create the "industries" table
+CREATE TABLE industries (
+    code VARCHAR(10) PRIMARY KEY,
+    industry VARCHAR(100) NOT NULL
+);
+
+-- Create the "company_industries" table
+CREATE TABLE company_industries (
+    company_code VARCHAR(10) REFERENCES companies(code) ON DELETE CASCADE,
+    industry_code VARCHAR(10) REFERENCES industries(code) ON DELETE CASCADE,
+    PRIMARY KEY (company_code, industry_code)
+);
+
+-- Add foreign key constraints to the "company_industries" table
+ALTER TABLE company_industries
+    ADD FOREIGN KEY (company_code) REFERENCES companies(code),
+    ADD FOREIGN KEY (industry_code) REFERENCES industries(code);
+
+
 INSERT INTO companies
   VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
          ('ibm', 'IBM', 'Big blue.');
